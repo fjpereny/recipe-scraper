@@ -36,7 +36,7 @@ def find_imgs(soup: BeautifulSoup) -> ResultSet:
     return imgs 
 
 
-def run():
+def run(text_only=False):
     # Recipe Scraping
     url = sys.argv[1]
     print(f"Scraping recipe from <{url}>")
@@ -46,15 +46,16 @@ def run():
     print("Recipe scraping complete!")
 
     # Image Scraping
-    imgs = find_imgs(soup)
-    os.mkdir(f"{title}")
-    img_n = 0
-    for img in imgs:
-        img_n += 1
-        img_url = img['src']
-        image = Image.open(requests.get(img_url, stream=True).raw)
-        image.save(f"{title}/{img_n}.jpg")
-    print("Image scraping complete!")
+    if not text_only:
+        imgs = find_imgs(soup)
+        os.mkdir(f"{title}")
+        img_n = 0
+        for img in imgs:
+            img_n += 1
+            img_url = img['src']
+            image = Image.open(requests.get(img_url, stream=True).raw)
+            image.save(f"{title}/{img_n}.jpg")
+        print("Image scraping complete!")
 
     # HTML Generation
     file_path = f"{title}.html"
@@ -62,9 +63,12 @@ def run():
         file.write(f"<div style=\"padding: 25px;\" >")
         file.write(f"<h1 style=\"font-family: sans-serif\">{title}</h1>")
         file.write(recipe)
-        g = glob.glob(f"{title}/*.jpg")
-        for img in g:
-            file.write(f"<div><img src=\"{img}\" style=\"padding: 25px;\" /></div>\n")
+
+        if not text_only:
+            g = glob.glob(f"{title}/*.jpg")
+            for img in g:
+                file.write(f"<div><img src=\"{img}\" style=\"padding: 25px;max-width: 6in;\" /></div>\n")
+
         file.write("</div>")
         file.close()
 
@@ -73,6 +77,7 @@ def run():
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        run()
+        run(text_only='--text-only' in sys.argv)
+        
     else:
         print("Usage: python delish_com_scraper.py <url>") 
